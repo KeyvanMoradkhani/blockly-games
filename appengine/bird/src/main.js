@@ -24,6 +24,7 @@ goog.require('Blockly.VerticalFlyout');
 goog.require('Blockly.Xml');
 goog.require('BlocklyCode');
 goog.require('BlocklyDialogs');
+goog.require('Slider');
 goog.require('BlocklyGames');
 goog.require('BlocklyInterface');
 
@@ -36,6 +37,16 @@ const WORM_ICON_SIZE = 100;
 const MAP_SIZE = 400;
 const WALL_THICKNESS = 10;
 const FLAP_SPEED = 100; // ms.
+
+
+/**
+ * Number of milliseconds that execution should delay.
+ * @type number
+ */
+let pause = 0;
+
+//define speedSlider var for keep speedSlider value
+let speedSlider;
 
 /**
  * Milliseconds between each animation frame.
@@ -372,6 +383,10 @@ function init() {
        html: BlocklyGames.IS_HTML});
 
   BlocklyInterface.init(BlocklyGames.getMsg('Games.bird', false));
+
+  // Initialize the slider.
+  const sliderSvg = BlocklyGames.getElementById('slider');
+  speedSlider = new Slider(10, 35, 130, sliderSvg);
 
   const rtl = BlocklyGames.IS_RTL;
   const blocklyDiv = BlocklyGames.getElementById('blockly');
@@ -761,7 +776,11 @@ function animate() {
     BlocklyInterface.workspace.getAudioManager().play(action[1], 0.5);
   }
 
-  pidList.push(setTimeout(animate, stepSpeed * 5));
+  // Scale the speed non-linearly, to give better precision at the fast end.
+  const stepSpeed = 1000 * Math.pow(1 - speedSlider.getValue(), 2);
+  pause = Math.max(1, stepSpeed);
+
+  pidList.push(setTimeout(animate, stepSpeed));
 }
 
 /**
